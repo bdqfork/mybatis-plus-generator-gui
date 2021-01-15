@@ -22,14 +22,14 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The bridge between GUI and the mybatis generator. All the operation to  mybatis generator should proceed through this
- * class
+ * The bridge between GUI and the mybatis generator. All the operation to
+ * mybatis generator should proceed through this class
  * <p>
  * Created by Owen on 6/30/16.
  */
 public class MybatisGeneratorBridge {
 
-	private static final Logger _LOG = LoggerFactory.getLogger(MybatisGeneratorBridge.class);
+    private static final Logger _LOG = LoggerFactory.getLogger(MybatisGeneratorBridge.class);
 
     private GeneratorConfig generatorConfig;
 
@@ -56,13 +56,13 @@ public class MybatisGeneratorBridge {
         Configuration configuration = new Configuration();
         Context context = new Context(ModelType.FLAT);
         configuration.addContext(context);
-		
+
         context.addProperty("javaFileEncoding", "UTF-8");
-        
-		String dbType = selectedDatabaseConfig.getDbType();
-		String connectorLibPath = ConfigHelper.findConnectorLibPath(dbType);
-	    _LOG.info("connectorLibPath: {}", connectorLibPath);
-	    configuration.addClasspathEntry(connectorLibPath);
+
+        String dbType = selectedDatabaseConfig.getDbType();
+        String connectorLibPath = ConfigHelper.findConnectorLibPath(dbType);
+        _LOG.info("connectorLibPath: {}", connectorLibPath);
+        configuration.addClasspathEntry(connectorLibPath);
         // Table configuration
         TableConfiguration tableConfig = new TableConfiguration(context);
         tableConfig.setTableName(generatorConfig.getTableName());
@@ -73,28 +73,27 @@ public class MybatisGeneratorBridge {
         tableConfig.setDeleteByExampleStatementEnabled(false);
         tableConfig.setSelectByExampleStatementEnabled(false);
 
-
-		context.addProperty("autoDelimitKeywords", "true");
-		if (DbType.MySQL.name().equals(dbType) || DbType.MySQL_8.name().equals(dbType)) {
-			tableConfig.setSchema(selectedDatabaseConfig.getSchema());
-			// 由于beginningDelimiter和endingDelimiter的默认值为双引号(")，在Mysql中不能这么写，所以还要将这两个默认值改为`
-			context.addProperty("beginningDelimiter", "`");
-			context.addProperty("endingDelimiter", "`");
-		} else {
+        context.addProperty("autoDelimitKeywords", "true");
+        if (DbType.MySQL.name().equals(dbType) || DbType.MySQL_8.name().equals(dbType)) {
+            tableConfig.setSchema(selectedDatabaseConfig.getSchema());
+            // 由于beginningDelimiter和endingDelimiter的默认值为双引号(")，在Mysql中不能这么写，所以还要将这两个默认值改为`
+            context.addProperty("beginningDelimiter", "`");
+            context.addProperty("endingDelimiter", "`");
+        } else {
             tableConfig.setCatalog(selectedDatabaseConfig.getSchema());
-	    }
+        }
         if (generatorConfig.isUseSchemaPrefix()) {
             if (DbType.MySQL.name().equals(dbType) || DbType.MySQL_8.name().equals(dbType)) {
                 tableConfig.setSchema(selectedDatabaseConfig.getSchema());
             } else if (DbType.Oracle.name().equals(dbType)) {
-                //Oracle的schema为用户名，如果连接用户拥有dba等高级权限，若不设schema，会导致把其他用户下同名的表也生成一遍导致mapper中代码重复
+                // Oracle的schema为用户名，如果连接用户拥有dba等高级权限，若不设schema，会导致把其他用户下同名的表也生成一遍导致mapper中代码重复
                 tableConfig.setSchema(selectedDatabaseConfig.getUsername());
             } else {
                 tableConfig.setCatalog(selectedDatabaseConfig.getSchema());
             }
         }
         // 针对 postgresql 单独配置
-		if (DbType.PostgreSQL.name().equals(dbType)) {
+        if (DbType.PostgreSQL.name().equals(dbType)) {
             tableConfig.setDelimitIdentifiers(true);
         }
 
@@ -113,36 +112,38 @@ public class MybatisGeneratorBridge {
             });
         }
         if (generatorConfig.isUseActualColumnNames()) {
-			tableConfig.addProperty("useActualColumnNames", "true");
+            tableConfig.addProperty("useActualColumnNames", "true");
         }
 
-		if(generatorConfig.isUseTableNameAlias()){
+        if (generatorConfig.isUseTableNameAlias()) {
             tableConfig.setAlias(generatorConfig.getTableName());
         }
 
         JDBCConnectionConfiguration jdbcConfig = new JDBCConnectionConfiguration();
         if (DbType.MySQL.name().equals(dbType) || DbType.MySQL_8.name().equals(dbType)) {
-	        jdbcConfig.addProperty("nullCatalogMeansCurrent", "true");
-	        // useInformationSchema可以拿到表注释，从而生成类注释可以使用表的注释
-	        jdbcConfig.addProperty("useInformationSchema", "true");
+            jdbcConfig.addProperty("nullCatalogMeansCurrent", "true");
+            // useInformationSchema可以拿到表注释，从而生成类注释可以使用表的注释
+            jdbcConfig.addProperty("useInformationSchema", "true");
         }
         jdbcConfig.setDriverClass(DbType.valueOf(dbType).getDriverClass());
         jdbcConfig.setConnectionURL(DbUtil.getConnectionUrlWithSchema(selectedDatabaseConfig));
         jdbcConfig.setUserId(selectedDatabaseConfig.getUsername());
         jdbcConfig.setPassword(selectedDatabaseConfig.getPassword());
-        if(DbType.Oracle.name().equals(dbType)){
+        if (DbType.Oracle.name().equals(dbType)) {
             jdbcConfig.getProperties().setProperty("remarksReporting", "true");
         }
         // java model
         JavaModelGeneratorConfiguration modelConfig = new JavaModelGeneratorConfiguration();
         modelConfig.setTargetPackage(generatorConfig.getModelPackage());
-        modelConfig.setTargetProject(generatorConfig.getProjectFolder() + "/" + generatorConfig.getModelPackageTargetFolder());
+        modelConfig.setTargetProject(
+                generatorConfig.getProjectFolder() + "/" + generatorConfig.getModelPackageTargetFolder());
         modelConfig.addProperty("rootClass", "Model<" + generatorConfig.getDomainObjectName() + ">");
 
         // Mapper configuration
         SqlMapGeneratorConfiguration mapperConfig = new SqlMapGeneratorConfiguration();
         mapperConfig.setTargetPackage(generatorConfig.getMappingXMLPackage());
-        mapperConfig.setTargetProject(generatorConfig.getProjectFolder() + "/" + generatorConfig.getMappingXMLTargetFolder());
+        mapperConfig.setTargetProject(
+                generatorConfig.getProjectFolder() + "/" + generatorConfig.getMappingXMLTargetFolder());
 
         // DAO
         JavaClientGeneratorConfiguration daoConfig = new JavaClientGeneratorConfiguration();
@@ -150,7 +151,6 @@ public class MybatisGeneratorBridge {
         daoConfig.setTargetPackage(generatorConfig.getDaoPackage());
         daoConfig.setTargetProject(generatorConfig.getProjectFolder() + "/" + generatorConfig.getDaoTargetFolder());
         daoConfig.addProperty("rootInterface", "BaseMapper<" + generatorConfig.getDomainObjectName() + ">");
-
 
         context.setId("myid");
         context.addTableConfiguration(tableConfig);
@@ -164,21 +164,21 @@ public class MybatisGeneratorBridge {
         if (generatorConfig.isComment()) {
             commentConfig.addProperty("columnRemarks", "true");
         }
-        if (StringUtils.isNoneEmpty(generatorConfig.getOptimisticLockerColumnName())){
+        if (StringUtils.isNoneEmpty(generatorConfig.getOptimisticLockerColumnName())) {
             commentConfig.addProperty("optimisticLockerColumnName", generatorConfig.getOptimisticLockerColumnName());
         }
-        if (StringUtils.isNoneEmpty(generatorConfig.getLogicDeleteFlagColumnName())){
+        if (StringUtils.isNoneEmpty(generatorConfig.getLogicDeleteFlagColumnName())) {
             commentConfig.addProperty("logicDeleteFlagColumnName", generatorConfig.getLogicDeleteFlagColumnName());
         }
         context.setCommentGeneratorConfiguration(commentConfig);
         // set java file encoding
         context.addProperty(PropertyRegistry.CONTEXT_JAVA_FILE_ENCODING, generatorConfig.getEncoding());
 
-        //实体添加序列化
+        // 实体添加序列化
         PluginConfiguration serializablePluginConfiguration = new PluginConfiguration();
         serializablePluginConfiguration.addProperty("type", "org.mybatis.generator.plugins.SerializablePlugin");
         serializablePluginConfiguration.setConfigurationType("org.mybatis.generator.plugins.SerializablePlugin");
-        context.addPluginConfiguration(serializablePluginConfiguration);
+        // context.addPluginConfiguration(serializablePluginConfiguration);
 
         // Lombok 插件
         if (generatorConfig.isUseLombokPlugin()) {
@@ -201,23 +201,23 @@ public class MybatisGeneratorBridge {
         // limit/offset插件
         if (generatorConfig.isOffsetLimit()) {
             if (DbType.MySQL.name().equals(dbType) || DbType.MySQL_8.name().equals(dbType)
-		            || DbType.PostgreSQL.name().equals(dbType)) {
+                    || DbType.PostgreSQL.name().equals(dbType)) {
                 PluginConfiguration pluginConfiguration = new PluginConfiguration();
                 pluginConfiguration.addProperty("type", "com.zzg.mybatis.generator.plugins.MySQLLimitPlugin");
                 pluginConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.MySQLLimitPlugin");
                 context.addPluginConfiguration(pluginConfiguration);
             }
         }
-        //for JSR310
+        // for JSR310
         if (generatorConfig.isJsr310Support()) {
             JavaTypeResolverConfiguration javaTypeResolverConfiguration = new JavaTypeResolverConfiguration();
-            javaTypeResolverConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.JavaTypeResolverJsr310Impl");
+            javaTypeResolverConfiguration
+                    .setConfigurationType("com.zzg.mybatis.generator.plugins.JavaTypeResolverJsr310Impl");
             context.setJavaTypeResolverConfiguration(javaTypeResolverConfiguration);
         }
-        //forUpdate 插件
-        if(generatorConfig.isNeedForUpdate()) {
-            if (DbType.MySQL.name().equals(dbType)
-                    || DbType.PostgreSQL.name().equals(dbType)) {
+        // forUpdate 插件
+        if (generatorConfig.isNeedForUpdate()) {
+            if (DbType.MySQL.name().equals(dbType) || DbType.PostgreSQL.name().equals(dbType)) {
                 PluginConfiguration pluginConfiguration = new PluginConfiguration();
                 pluginConfiguration.addProperty("type", "com.zzg.mybatis.generator.plugins.MySQLForUpdatePlugin");
                 pluginConfiguration.setConfigurationType("com.zzg.mybatis.generator.plugins.MySQLForUpdatePlugin");
@@ -242,31 +242,31 @@ public class MybatisGeneratorBridge {
         ShellCallback shellCallback = new DefaultShellCallback(true); // override=true
         MyBatisGenerator myBatisGenerator = new MyBatisGenerator(configuration, shellCallback, warnings);
         // if overrideXML selected, delete oldXML ang generate new one
-		if (generatorConfig.isOverrideXML()) {
-			String mappingXMLFilePath = getMappingXMLFilePath(generatorConfig);
-			File mappingXMLFile = new File(mappingXMLFilePath);
-			if (mappingXMLFile.exists()) {
-				mappingXMLFile.delete();
-			}
-		}
+        if (generatorConfig.isOverrideXML()) {
+            String mappingXMLFilePath = getMappingXMLFilePath(generatorConfig);
+            File mappingXMLFile = new File(mappingXMLFilePath);
+            if (mappingXMLFile.exists()) {
+                mappingXMLFile.delete();
+            }
+        }
         myBatisGenerator.generate(progressCallback, contexts, fullyqualifiedTables);
     }
 
     private String getMappingXMLFilePath(GeneratorConfig generatorConfig) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(generatorConfig.getProjectFolder()).append("/");
-		sb.append(generatorConfig.getMappingXMLTargetFolder()).append("/");
-		String mappingXMLPackage = generatorConfig.getMappingXMLPackage();
-		if (StringUtils.isNotEmpty(mappingXMLPackage)) {
-			sb.append(mappingXMLPackage.replace(".", "/")).append("/");
-		}
+        StringBuilder sb = new StringBuilder();
+        sb.append(generatorConfig.getProjectFolder()).append("/");
+        sb.append(generatorConfig.getMappingXMLTargetFolder()).append("/");
+        String mappingXMLPackage = generatorConfig.getMappingXMLPackage();
+        if (StringUtils.isNotEmpty(mappingXMLPackage)) {
+            sb.append(mappingXMLPackage.replace(".", "/")).append("/");
+        }
 
         sb.append(generatorConfig.getDomainObjectName()).append("Mapper.xml");
 
-		return sb.toString();
-	}
+        return sb.toString();
+    }
 
-	public void setProgressCallback(ProgressCallback progressCallback) {
+    public void setProgressCallback(ProgressCallback progressCallback) {
         this.progressCallback = progressCallback;
     }
 

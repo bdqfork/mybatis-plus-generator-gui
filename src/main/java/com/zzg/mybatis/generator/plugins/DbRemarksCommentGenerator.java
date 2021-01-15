@@ -36,7 +36,6 @@ import static org.mybatis.generator.internal.util.StringUtility.isTrue;
  */
 public class DbRemarksCommentGenerator implements CommentGenerator {
 
-
     private Properties properties;
     private boolean columnRemarks;
 
@@ -45,7 +44,6 @@ public class DbRemarksCommentGenerator implements CommentGenerator {
         properties = new Properties();
 
     }
-
 
     public void addJavaFileComment(CompilationUnit compilationUnit) {
         // add no file level comments by default
@@ -63,43 +61,45 @@ public class DbRemarksCommentGenerator implements CommentGenerator {
         return;
     }
 
-	@Override
-	public void addGeneralMethodAnnotation(Method method, IntrospectedTable introspectedTable, Set<FullyQualifiedJavaType> set) {
+    @Override
+    public void addGeneralMethodAnnotation(Method method, IntrospectedTable introspectedTable,
+            Set<FullyQualifiedJavaType> set) {
 
+    }
 
-	}
+    @Override
+    public void addGeneralMethodAnnotation(Method method, IntrospectedTable introspectedTable,
+            IntrospectedColumn introspectedColumn, Set<FullyQualifiedJavaType> set) {
 
-	@Override
-	public void addGeneralMethodAnnotation(Method method, IntrospectedTable introspectedTable, IntrospectedColumn introspectedColumn, Set<FullyQualifiedJavaType> set) {
+    }
 
-	}
+    @Override
+    public void addFieldAnnotation(Field field, IntrospectedTable introspectedTable, Set<FullyQualifiedJavaType> set) {
 
-	@Override
-	public void addFieldAnnotation(Field field, IntrospectedTable introspectedTable, Set<FullyQualifiedJavaType> set) {
+    }
 
-	}
+    @Override
+    public void addFieldAnnotation(Field field, IntrospectedTable introspectedTable,
+            IntrospectedColumn introspectedColumn, Set<FullyQualifiedJavaType> set) {
 
-	@Override
-	public void addFieldAnnotation(Field field, IntrospectedTable introspectedTable, IntrospectedColumn introspectedColumn, Set<FullyQualifiedJavaType> set) {
+    }
 
-	}
+    @Override
+    public void addClassAnnotation(InnerClass innerClass, IntrospectedTable introspectedTable,
+            Set<FullyQualifiedJavaType> set) {
+    }
 
-	@Override
-	public void addClassAnnotation(InnerClass innerClass, IntrospectedTable introspectedTable, Set<FullyQualifiedJavaType> set) {
-	}
-
-	public void addConfigurationProperties(Properties properties) {
+    public void addConfigurationProperties(Properties properties) {
         this.properties.putAll(properties);
     }
 
-    public void addClassComment(InnerClass innerClass,
-            IntrospectedTable introspectedTable) {
+    public void addClassComment(InnerClass innerClass, IntrospectedTable introspectedTable) {
     }
 
-    public void addModelClassComment(TopLevelClass topLevelClass,
-                                IntrospectedTable introspectedTable) {
+    public void addModelClassComment(TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
         topLevelClass.addImportedType("com.baomidou.mybatisplus.annotation.*");
         topLevelClass.addImportedType("com.baomidou.mybatisplus.extension.activerecord.Model");
+        topLevelClass.addImportedType("java.io.Serializable");
 
         topLevelClass.addJavaDocLine("/**");
         topLevelClass.addJavaDocLine(" * " + introspectedTable.getRemarks());
@@ -109,14 +109,18 @@ public class DbRemarksCommentGenerator implements CommentGenerator {
 
         topLevelClass.addAnnotation("@TableName(\"" + tableName + "\")");
 
+        Field field = new Field("serialVersionUID", new FullyQualifiedJavaType("long"));
+        field.setFinal(true);
+        field.setStatic(true);
+        field.setVisibility(JavaVisibility.PRIVATE);
+        field.setInitializationString("1L");
+        topLevelClass.addField(field);
     }
 
-    public void addEnumComment(InnerEnum innerEnum,
-            IntrospectedTable introspectedTable) {
+    public void addEnumComment(InnerEnum innerEnum, IntrospectedTable introspectedTable) {
     }
 
-    public void addFieldComment(Field field,
-            IntrospectedTable introspectedTable,
+    public void addFieldComment(Field field, IntrospectedTable introspectedTable,
             IntrospectedColumn introspectedColumn) {
 
         if (StringUtility.stringHasValue(introspectedColumn.getRemarks())) {
@@ -128,17 +132,19 @@ public class DbRemarksCommentGenerator implements CommentGenerator {
             field.addJavaDocLine(" */");
         }
 
-        //添加注解
+        // 添加注解
         if (field.isTransient()) {
-            //@Column
+            // @Column
             field.addAnnotation("@Transient");
         }
         for (IntrospectedColumn column : introspectedTable.getPrimaryKeyColumns()) {
             if (introspectedColumn == column) {
                 if (column.isAutoIncrement()) {
-                    field.addAnnotation("@TableId(value = \"" + column.getActualColumnName() + "\", type= IdType.AUTO)");
+                    field.addAnnotation(
+                            "@TableId(value = \"" + column.getActualColumnName() + "\", type = IdType.AUTO)");
                 } else {
-                    field.addAnnotation("@TableId(value = \"" + column.getActualColumnName() + "\", type= IdType.INPUT)");
+                    field.addAnnotation(
+                            "@TableId(value = \"" + column.getActualColumnName() + "\", type = IdType.INPUT)");
                 }
                 return;
             }
@@ -150,43 +156,38 @@ public class DbRemarksCommentGenerator implements CommentGenerator {
         if (isOptimisticLockerColumn(column)) {
             field.addAnnotation("@Version");
         }
-        if (StringUtility.stringContainsSpace(column) || introspectedTable.getTableConfiguration().isAllColumnDelimitingEnabled()) {
-            column = introspectedColumn.getContext().getBeginningDelimiter()
-                    + column
+        if (StringUtility.stringContainsSpace(column)
+                || introspectedTable.getTableConfiguration().isAllColumnDelimitingEnabled()) {
+            column = introspectedColumn.getContext().getBeginningDelimiter() + column
                     + introspectedColumn.getContext().getEndingDelimiter();
         }
         field.addAnnotation("@TableField(\"" + column + "\")");
 
-
     }
 
-    private  boolean isLogicDeleteColumn(String column){
+    private boolean isLogicDeleteColumn(String column) {
         return column.equals(properties.getProperty("logicDeleteFlagColumnName"));
     }
 
-    private  boolean isOptimisticLockerColumn(String column){
+    private boolean isOptimisticLockerColumn(String column) {
         return column.equals(properties.getProperty("optimisticLockerColumnName"));
     }
 
     public void addFieldComment(Field field, IntrospectedTable introspectedTable) {
     }
 
-    public void addGeneralMethodComment(Method method,
-            IntrospectedTable introspectedTable) {
+    public void addGeneralMethodComment(Method method, IntrospectedTable introspectedTable) {
     }
 
-    public void addGetterComment(Method method,
-            IntrospectedTable introspectedTable,
+    public void addGetterComment(Method method, IntrospectedTable introspectedTable,
             IntrospectedColumn introspectedColumn) {
     }
 
-    public void addSetterComment(Method method,
-            IntrospectedTable introspectedTable,
+    public void addSetterComment(Method method, IntrospectedTable introspectedTable,
             IntrospectedColumn introspectedColumn) {
     }
 
-    public void addClassComment(InnerClass innerClass,
-            IntrospectedTable introspectedTable, boolean markAsDoNotDelete) {
+    public void addClassComment(InnerClass innerClass, IntrospectedTable introspectedTable, boolean markAsDoNotDelete) {
         innerClass.addJavaDocLine("/**"); //$NON-NLS-1$
         innerClass.addJavaDocLine(" */"); //$NON-NLS-1$
     }
